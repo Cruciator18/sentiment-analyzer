@@ -1,25 +1,14 @@
 import streamlit as st
 import requests
-from textblob import TextBlob
 from dotenv import load_dotenv
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+from sentiment import analyze_sentiment  # Hugging Face model
 
 # Load environment variables
 load_dotenv()
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
-
-# Sentiment analysis function
-def analyze_sentiment(text):
-    blob = TextBlob(text)
-    polarity = blob.sentiment.polarity
-    if polarity > 0:
-        return "Positive", polarity
-    elif polarity < 0:
-        return "Negative", polarity
-    else:
-        return "Neutral", polarity
 
 # Fetch articles from NewsAPI
 def fetch_news(query, max_articles=10):
@@ -38,13 +27,15 @@ def fetch_news(query, max_articles=10):
         articles = response.json().get("articles", [])
         for article in articles:
             title = article['title']
-            sentiment, polarity = analyze_sentiment(title)
+            result = analyze_sentiment(title)
+            sentiment = {"POSITIVE": "Positive", "NEGATIVE": "Negative"}.get(result["label"].upper(), "Neutral")
+            score = result["score"]
             results.append({
                 "title": title,
                 "source": article['source']['name'],
                 "url": article['url'],
                 "sentiment": sentiment,
-                "polarity": round(polarity, 2)
+                "polarity": score  # confidence score
             })
     else:
         st.error(f"API Error {response.status_code}: {response.text}")
@@ -56,7 +47,7 @@ def fetch_news(query, max_articles=10):
 
 st.set_page_config(page_title="📰 News Sentiment Analyzer", layout="wide")
 st.title("🧠 Real-time News Sentiment Analyzer")
-st.caption("Analyze news headlines and detect overall sentiment 💬")
+st.caption("Analyze news headlines using a deep learning model 💬")
 
 query = st.text_input("🔍 Enter a keyword or topic", placeholder="e.g. AI, climate change, cricket...")
 
@@ -65,13 +56,10 @@ if query:
         articles = fetch_news(query)
 
     if articles:
-        # Convert to DataFrame
         df = pd.DataFrame(articles)
-
-        # Sentiment counts
         sentiment_counts = df['sentiment'].value_counts()
 
-        # Display summary
+        # Sentiment summary
         with st.container():
             st.subheader("📊 Sentiment Summary")
             col1, col2 = st.columns(2)
@@ -89,12 +77,12 @@ if query:
                     emoji = "🟢" if sentiment == "Positive" else "⚪" if sentiment == "Neutral" else "🔴"
                     st.metric(label=f"{emoji} {sentiment}", value=count)
 
-        # Article display
+        # Show articles
         st.subheader("🗞️ News Articles")
         for _, row in df.iterrows():
             sentiment_emoji = {"Positive": "😊", "Neutral": "😐", "Negative": "😠"}.get(row['sentiment'], "❓")
             with st.expander(f"{sentiment_emoji} {row['title']}"):
-                st.write(f"**Sentiment:** {row['sentiment']} (Polarity: {row['polarity']})")
+                st.write(f"**Sentiment:** {row['sentiment']} (Confidence: {row['polarity']}%)")
                 st.write(f"**Source:** {row['source']}")
                 st.markdown(f"[🔗 Read Full Article]({row['url']})")
                 st.markdown("---")
