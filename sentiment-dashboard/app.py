@@ -3,7 +3,7 @@ import requests
 
 
 import pandas as pd
-import matplotlib.pyplot as plt
+
 from sentiment import analyze_sentiment  
 
 # Load environment variables
@@ -66,11 +66,16 @@ if query:
             col1, col2 = st.columns(2)
 
             with col1:
-                fig, ax = plt.subplots()
-                sentiment_counts.plot(kind='bar', color=['green', 'gray', 'red'], ax=ax)
-                plt.title("Sentiment Distribution")
-                plt.xticks(rotation=0)
-                st.pyplot(fig)
+                ordered_counts= pd.DataFrame({
+                    "Sentiment" : ["Positive", "Negative","Neutral"],
+                    "Count" : [sentiment_counts.get("Positive", 0),
+                               sentiment_counts.get("Negative,0"),
+                               sentiment_counts.get("Neutral,0"),
+                               ]
+                })
+                
+                ordered_counts.set_index("Sentiment", inplace=True)
+                st.bar_chart(ordered_counts)
 
             with col2:
                 for sentiment in ['Positive', 'Neutral', 'Negative']:
