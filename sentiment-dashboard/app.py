@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 from sentiment import analyze_sentiment  # Hugging Face model
 
 # Load environment variables
-load_dotenv()
-NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+
+NEWS_API_KEY = st.secrets["NEWS_API_KEY"]
+
 
 # Fetch articles from NewsAPI
 def fetch_news(query, max_articles=10):
