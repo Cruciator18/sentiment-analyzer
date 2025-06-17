@@ -1,10 +1,10 @@
 import streamlit as st
 import requests
-from dotenv import load_dotenv
-import os
+
+
 import pandas as pd
 import matplotlib.pyplot as plt
-from sentiment import analyze_sentiment  # Hugging Face model
+from sentiment import analyze_sentiment  
 
 # Load environment variables
 
@@ -36,15 +36,15 @@ def fetch_news(query, max_articles=10):
                 "source": article['source']['name'],
                 "url": article['url'],
                 "sentiment": sentiment,
-                "polarity": score  # confidence score
+                "polarity": score  
             })
     else:
         st.error(f"API Error {response.status_code}: {response.text}")
     return results
 
-# ------------------------------------------
+
 # Streamlit UI
-# ------------------------------------------
+
 
 st.set_page_config(page_title="📰 News Sentiment Analyzer", layout="wide")
 st.title("🧠 Real-time News Sentiment Analyzer")
