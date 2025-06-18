@@ -6,6 +6,8 @@ import pandas as pd
 
 from sentiment import analyze_sentiment  
 
+st.set_page_config(page_title="📰 News Sentiment Analyzer", layout="wide")
+
 # Load environment variables
 
 NEWS_API_KEY = st.secrets["NEWS_API_KEY"]
