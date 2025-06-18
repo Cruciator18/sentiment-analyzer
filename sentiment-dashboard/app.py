@@ -1,19 +1,12 @@
 import streamlit as st
 import requests
-
-
 import pandas as pd
-
-from sentiment import analyze_sentiment  
+from sentiment import analyze_sentiment
 
 st.set_page_config(page_title="📰 News Sentiment Analyzer", layout="wide")
 
-# Load environment variables
-
 NEWS_API_KEY = st.secrets["NEWS_API_KEY"]
 
-
-# Fetch articles from NewsAPI
 def fetch_news(query, max_articles=10):
     url = "https://newsapi.org/v2/everything"
     params = {
@@ -38,17 +31,13 @@ def fetch_news(query, max_articles=10):
                 "source": article['source']['name'],
                 "url": article['url'],
                 "sentiment": sentiment,
-                "polarity": score  
+                "polarity": round(score * 100, 2)
             })
     else:
         st.error(f"API Error {response.status_code}: {response.text}")
+    
     return results
 
-
-# Streamlit UI
-
-
-st.set_page_config(page_title="📰 News Sentiment Analyzer", layout="wide")
 st.title("🧠 Real-time News Sentiment Analyzer")
 st.caption("Analyze news headlines using a deep learning model 💬")
 
@@ -62,21 +51,20 @@ if query:
         df = pd.DataFrame(articles)
         sentiment_counts = df['sentiment'].value_counts()
 
-        # Sentiment summary
         with st.container():
             st.subheader("📊 Sentiment Summary")
             col1, col2 = st.columns(2)
 
             with col1:
-                ordered_counts= pd.DataFrame({
-                    "Sentiment" : ["Positive", "Negative","Neutral"],
-                    "Count" : [sentiment_counts.get("Positive", 0),
-                               sentiment_counts.get("Negative,0"),
-                               sentiment_counts.get("Neutral,0"),
-                               ]
-                })
-                
-                ordered_counts.set_index("Sentiment", inplace=True)
+                ordered_counts = pd.DataFrame({
+                    "Sentiment": ["Positive", "Negative", "Neutral"],
+                    "Count": [
+                        sentiment_counts.get("Positive", 0),
+                        sentiment_counts.get("Negative", 0),
+                        sentiment_counts.get("Neutral", 0),
+                    ]
+                }).set_index("Sentiment")
+
                 st.bar_chart(ordered_counts)
 
             with col2:
@@ -85,10 +73,14 @@ if query:
                     emoji = "🟢" if sentiment == "Positive" else "⚪" if sentiment == "Neutral" else "🔴"
                     st.metric(label=f"{emoji} {sentiment}", value=count)
 
-        # Show articles
         st.subheader("🗞️ News Articles")
         for _, row in df.iterrows():
-            sentiment_emoji = {"Positive": "😊", "Neutral": "😐", "Negative": "😠"}.get(row['sentiment'], "❓")
+            sentiment_emoji = {
+                "Positive": "😊",
+                "Neutral": "😐",
+                "Negative": "😠"
+            }.get(row['sentiment'], "❓")
+
             with st.expander(f"{sentiment_emoji} {row['title']}"):
                 st.write(f"**Sentiment:** {row['sentiment']} (Confidence: {row['polarity']}%)")
                 st.write(f"**Source:** {row['source']}")
